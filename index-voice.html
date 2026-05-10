@@ -1377,7 +1377,7 @@
     <audio id="audio-10" preload="auto" src="audio/slide10.mp3"></audio>
 
     <!-- Keyboard hint -->
-    <div class="keyboard-hint">ใช้ <kbd>←</kbd> <kbd>→</kbd> เปลี่ยนสไลด์ | <kbd>Space</kbd> เล่น/หยุดเสียง | <kbd>N</kbd> เปิด/ปิดบทบรรยาย</div>
+    <div class="keyboard-hint">ใช้ <kbd>←</kbd> <kbd>→</kbd> เปลี่ยนสไลด์ (เสียงเล่นอัตโนมัติ) | <kbd>Space</kbd> เล่น/หยุด | <kbd>N</kbd> บทบรรยาย</div>
 
     <!-- Speaker Notes Panel -->
     <div class="speaker-notes" id="speakerNotes">
@@ -1458,7 +1458,12 @@
         function playCurrentAudio() {
             if (!autoPlayEnabled) return;
             const audio = getCurrentAudio();
-            if (audio) audio.play().catch(() => {});
+            if (audio) {
+                audio.play().catch(err => {
+                    // Browser blocked autoplay - user needs to interact first
+                    console.log('Audio play blocked:', err.message);
+                });
+            }
         }
 
         function togglePlayPause() {
@@ -1494,9 +1499,9 @@
             // Update voice controls
             updateVoiceControls();
 
-            // Auto-play new slide
+            // Auto-play new slide immediately
             if (autoPlayEnabled) {
-                setTimeout(() => playCurrentAudio(), 300);
+                playCurrentAudio();
             }
         }
 
@@ -1618,6 +1623,22 @@
 
         // Initialize
         updateSlide();
+
+        // Unlock audio on first user interaction (browser autoplay policy)
+        let audioUnlocked = false;
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            audioUnlocked = true;
+            const audio = getCurrentAudio();
+            if (audio) {
+                audio.play().then(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }).catch(() => {});
+            }
+        }
+        document.addEventListener('click', unlockAudio, { once: false });
+        document.addEventListener('keydown', unlockAudio, { once: false });
 
         // Speaker notes toggle
         let notesVisible = false;
