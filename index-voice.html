@@ -939,6 +939,66 @@
             .deepdive-container { grid-template-columns: 1fr; }
             .why-container { flex-direction: column; }
         }
+
+        /* Voice Controls */
+        .voice-control-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 200;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--dark3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(20px);
+        }
+
+        .voice-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--dark3);
+            background: var(--dark2);
+            color: var(--light);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .voice-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .voice-speed {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 8px;
+            padding-left: 12px;
+            border-left: 1px solid var(--dark3);
+        }
+
+        .voice-speed label {
+            font-size: 12px;
+            color: var(--light2);
+        }
+
+        .voice-speed select {
+            background: var(--dark2);
+            border: 1px solid var(--dark3);
+            color: var(--light);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -1304,8 +1364,20 @@
     <!-- Indicators -->
     <div class="slide-indicators" id="indicators"></div>
 
+    <!-- Audio elements for each slide -->
+    <audio id="audio-1" preload="auto" src="audio/slide1.mp3"></audio>
+    <audio id="audio-2" preload="auto" src="audio/slide2.mp3"></audio>
+    <audio id="audio-3" preload="auto" src="audio/slide3.mp3"></audio>
+    <audio id="audio-4" preload="auto" src="audio/slide4.mp3"></audio>
+    <audio id="audio-5" preload="auto" src="audio/slide5.mp3"></audio>
+    <audio id="audio-6" preload="auto" src="audio/slide6.mp3"></audio>
+    <audio id="audio-7" preload="auto" src="audio/slide7.mp3"></audio>
+    <audio id="audio-8" preload="auto" src="audio/slide8.mp3"></audio>
+    <audio id="audio-9" preload="auto" src="audio/slide9.mp3"></audio>
+    <audio id="audio-10" preload="auto" src="audio/slide10.mp3"></audio>
+
     <!-- Keyboard hint -->
-    <div class="keyboard-hint">ใช้ <kbd>←</kbd> <kbd>→</kbd> เปลี่ยนสไลด์ | <kbd>N</kbd> เปิด/ปิดบทบรรยาย</div>
+    <div class="keyboard-hint">ใช้ <kbd>←</kbd> <kbd>→</kbd> เปลี่ยนสไลด์ | <kbd>Space</kbd> เล่น/หยุดเสียง | <kbd>N</kbd> เปิด/ปิดบทบรรยาย</div>
 
     <!-- Speaker Notes Panel -->
     <div class="speaker-notes" id="speakerNotes">
@@ -1358,6 +1430,7 @@
     <script>
         let currentSlide = 1;
         const totalSlides = 10;
+        let autoPlayEnabled = true;
 
         // Create indicators
         const indicatorsContainer = document.getElementById('indicators');
@@ -1368,7 +1441,40 @@
             indicatorsContainer.appendChild(dot);
         }
 
+        function getCurrentAudio() {
+            return document.getElementById('audio-' + currentSlide);
+        }
+
+        function stopAllAudio() {
+            for (let i = 1; i <= totalSlides; i++) {
+                const audio = document.getElementById('audio-' + i);
+                if (audio) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+            }
+        }
+
+        function playCurrentAudio() {
+            if (!autoPlayEnabled) return;
+            const audio = getCurrentAudio();
+            if (audio) audio.play().catch(() => {});
+        }
+
+        function togglePlayPause() {
+            const audio = getCurrentAudio();
+            if (!audio) return;
+            if (audio.paused) {
+                audio.play().catch(() => {});
+            } else {
+                audio.pause();
+            }
+        }
+
         function updateSlide() {
+            // Stop previous audio
+            stopAllAudio();
+
             // Update slides
             document.querySelectorAll('.slide').forEach((slide, index) => {
                 slide.classList.toggle('active', index + 1 === currentSlide);
@@ -1381,6 +1487,17 @@
 
             // Update progress bar
             document.getElementById('progress').style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+            // Update speaker notes
+            if (notesVisible) updateNotes();
+
+            // Update voice controls
+            updateVoiceControls();
+
+            // Auto-play new slide
+            if (autoPlayEnabled) {
+                setTimeout(() => playCurrentAudio(), 300);
+            }
         }
 
         function changeSlide(direction) {
@@ -1395,14 +1512,25 @@
 
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') {
+            if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+                e.preventDefault();
                 changeSlide(1);
-            } else if (e.key === 'ArrowLeft') {
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                e.preventDefault();
                 changeSlide(-1);
             } else if (e.key === 'Home') {
                 goToSlide(1);
             } else if (e.key === 'End') {
                 goToSlide(totalSlides);
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                togglePlayPause();
+            } else if (e.key === 'n' || e.key === 'N') {
+                toggleNotes();
+            } else if (e.key === 'm' || e.key === 'M') {
+                toggleMute();
+            } else if (e.key === 'a' || e.key === 'A') {
+                toggleAutoPlay();
             }
         });
 
@@ -1418,6 +1546,75 @@
                 changeSlide(diff > 0 ? 1 : -1);
             }
         });
+
+        // Voice controls
+        let voiceVolume = 1.0;
+        const voiceControls = document.createElement('div');
+        voiceControls.className = 'voice-controls';
+        voiceControls.innerHTML = `
+            <div class="voice-control-panel" id="voicePanel">
+                <button class="voice-btn" id="playPauseBtn" title="เล่น/หยุด (Space)">▶</button>
+                <button class="voice-btn" id="stopBtn" title="หยุด">⏹</button>
+                <button class="voice-btn" id="muteBtn" title="ปิดเสียง (M)">🔊</button>
+                <button class="voice-btn" id="autoPlayBtn" title="เล่นอัตโนมัติ (A)">🔄</button>
+                <div class="voice-speed">
+                    <label>ความเร็ว:</label>
+                    <select id="speedSelect">
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                    </select>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(voiceControls);
+
+        document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+        document.getElementById('stopBtn').addEventListener('click', () => { stopAllAudio(); });
+        document.getElementById('muteBtn').addEventListener('click', toggleMute);
+        document.getElementById('autoPlayBtn').addEventListener('click', toggleAutoPlay);
+        document.getElementById('speedSelect').addEventListener('change', (e) => {
+            for (let i = 1; i <= totalSlides; i++) {
+                const audio = document.getElementById('audio-' + i);
+                if (audio) audio.playbackRate = parseFloat(e.target.value);
+            }
+        });
+
+        function toggleMute() {
+            const audio = getCurrentAudio();
+            const btn = document.getElementById('muteBtn');
+            if (!audio) return;
+            audio.muted = !audio.muted;
+            btn.textContent = audio.muted ? '🔇' : '🔊';
+        }
+
+        function toggleAutoPlay() {
+            autoPlayEnabled = !autoPlayEnabled;
+            const btn = document.getElementById('autoPlayBtn');
+            btn.textContent = autoPlayEnabled ? '🔄' : '⏸️';
+            btn.style.opacity = autoPlayEnabled ? '1' : '0.5';
+            if (autoPlayEnabled) playCurrentAudio();
+        }
+
+        function updateVoiceControls() {
+            const audio = getCurrentAudio();
+            const btn = document.getElementById('playPauseBtn');
+            if (audio && !audio.paused) {
+                btn.textContent = '⏸';
+            } else {
+                btn.textContent = '▶';
+            }
+        }
+
+        // Auto-update play/pause button
+        setInterval(() => {
+            const audio = getCurrentAudio();
+            if (audio) {
+                const btn = document.getElementById('playPauseBtn');
+                btn.textContent = audio.paused ? '▶' : '⏸';
+            }
+        }, 500);
 
         // Initialize
         updateSlide();
@@ -1440,22 +1637,6 @@
         }
 
         notesToggleBtn.addEventListener('click', toggleNotes);
-
-        // Update notes when slide changes
-        const originalUpdateSlide = updateSlide;
-        updateSlide = function() {
-            originalUpdateSlide();
-            if (notesVisible) updateNotes();
-        };
-
-        // N key to toggle notes
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'n' || e.key === 'N') {
-                toggleNotes();
-            }
-        });
-
-        // Show notes for current slide on load
         updateNotes();
     </script>
 </body>
