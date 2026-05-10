@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Harness คืออะไร?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Noto+Sans+Thai:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --accent: #06b6d4;
+            --accent2: #f59e0b;
+            --dark: #0f172a;
+            --dark2: #1e293b;
+            --dark3: #334155;
+            --light: #f8fafc;
+            --light2: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --gradient1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient2: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
+            --gradient3: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            --gradient4: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans Thai', sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            overflow: hidden;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide.active { display: flex; }
+
+        .slide-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 80px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Background overlays */
+        .bg-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .bg-gradient {
+            background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.9) 100%);
+        }
+
+        .bg-pattern {
+            position: absolute;
+            inset: 0;
+            opacity: 0.05;
+            background-image:
+                radial-gradient(circle at 25% 25%, var(--primary) 1px, transparent 1px),
+                radial-gradient(circle at 75% 75%, var(--accent) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .bg-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+        }
+
+        .bg-glow-1 {
+            width: 600px; height: 600px;
+            background: var(--primary);
+            top: -200px; right: -100px;
+        }
+
+        .bg-glow-2 {
+            width: 400px; height: 400px;
+            background: var(--accent);
+            bottom: -100px; left: -100px;
+        }
+
+        /* Slide indicators */
+        .slide-indicators {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--dark3);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .indicator.active {
+            background: var(--primary);
+            width: 30px;
+            border-radius: 5px;
+        }
+
+        /* Navigation */
+        .nav-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            background: rgba(30,41,59,0.8);
+            border: 1px solid var(--dark3);
+            color: var(--light);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .nav-prev { left: 20px; }
+        .nav-next { right: 20px; }
+
+        /* Page number */
+        .page-num {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: var(--dark3);
+            z-index: 10;
+        }
+
+        /* Slide image containers */
+        .slide-image {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .slide-image-lg {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 16px;
+            margin: 20px 0;
+        }
+
+        .slide-image-small {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* Card image styling */
+        .comparison-card img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .example-card img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .component-card img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .deepdive-visual img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .usecase-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .anatomy-image {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .why-image {
+            width: 100%;
+            max-width: 450px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        /* ============ SLIDE 1: COVER ============ */
+        #slide-1 .bg-overlay {
+            background: url('https://cdn.sanity.io/images/4zrzovbb/website/59d8193a6b567be2517480da4d60484a7fb64f21-1788x1024.jpg') center/cover;
+        }
+
+        #slide-1 .bg-overlay::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(99,102,241,0.7) 100%);
+        }
+
+        .cover-badge {
+            background: rgba(99,102,241,0.2);
+            border: 1px solid rgba(99,102,241,0.4);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            color: var(--accent);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .cover-title {
+            font-size: 80px;
+            font-weight: 900;
+            text-align: center;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s ease;
+        }
+
+        .cover-title .highlight {
+            background: var(--gradient2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cover-subtitle {
+            font-size: 26px;
+            font-weight: 300;
+            color: var(--light2);
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInUp 1.2s ease;
+        }
+
+        .cover-meta {
+            font-size: 16px;
+            color: var(--dark3);
+            animation: fadeInUp 1.4s ease;
+        }
+
+        /* ============ SLIDE 2: WHAT IS IT ============ */
+        .section-label {
+            font-size: 14px;
+            color: var(--accent);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 52px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 50px;
+            line-height: 1.2;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .comparison-card {
+            background: var(--dark2);
+            border: 1px solid var(--dark3);
+            border-radius: 16px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comparison-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .comparison-card.before::before { background: var(--danger); }
+        .comparison-card.after::before { background: var(--success); }
+
+        .comparison-card .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .comparison-card h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .comparison-card p {
+            font-size: 16px;
+            color: var(--light2);
+            line-height: 1.8;
+        }
+
+        .comparison-card .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .card-before .tag {
+            background: rgba(239,68,68,0.2);
+            color: var(--danger);
+        }
+
+        .card-after .tag {
+            background: rgba(16,185,129,0.2);
+            color: var(--success);
+        }
+
+        .arrow-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            color: var(--accent);
+            z-index: 5;
+            animation: pulse 2s infinite;
+        }
+
+        /* ============ SLIDE 3: ANATOMY ============ */
+        .anatomy-container {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .anatomy-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .anatomy-circle {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .anatomy-circle.core {
+            background: var(--gradient1);
+            z-index: 3;
+        }
+
+        .anatomy-circle.middle {
+            width: 380px;
+            height: 380px;
+            border: 2px dashed rgba(6,182,212,0.3);
+            position: absolute;
+            animation: rotate 20s linear infinite;
+        }
+
+        .anatomy-circle.outer {
+            width: 480px;
+            height: 480px;
+            border: 2px dashed rgba(99,102,241,0.2);
+            position: absolute;
+            animation: rotate 30s linear infinite reverse;
+        }
+
+        .anatomy-list {
+            flex: 1;
+        }
+
+        .anatomy-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: var(--dark2);
+            border-radius: 12px;
+            border-left: 4px solid;
+            transition: all 0.3s;
+        }
+
+        .anatomy-item:hover {
+            transform: translateX(10px);
+        }
+
+        .anatomy-item:nth-child(1) { border-color: var(--primary); }
+        .anatomy-item:nth-child(2) { border-color: var(--accent); }
+        .anatomy-item:nth-child(3) { border-color: var(--accent2); }
+        .anatomy-item:nth-child(4) { border-color: var(--success); }
+
+        .anatomy-item .num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .anatomy-item:nth-child(1) .num { background: rgba(99,102,241,0.2); color: var(--primary); }
+        .anatomy-item:nth-child(2) .num { background: rgba(6,182,212,0.2); color: var(--accent); }
+        .anatomy-item:nth-child(3) .num { background: rgba(245,158,11,0.2); color: var(--accent2); }
+        .anatomy-item:nth-child(4) .num { background: rgba(16,185,129,0.2); color: var(--success); }
+
+        .anatomy-item h4 { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+        .anatomy-item p { font-size: 14px; color: var(--light2); }
+
+        /* ============ SLIDE 4: COMPONENTS ============ */
+        .components-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .component-card {
+            background: var(--dark2);
+            border: 1px solid var(--dark3);
+            border-radius: 16px;
+            padding: 30px;
+            display: flex;
+            align-items: start;
+            gap: 20px;
+            transition: all 0.3s;
+        }
+
+        .component-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(99,102,241,0.1);
+        }
+
+        .component-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .component-card:nth-child(1) .component-icon { background: var(--gradient1); }
+        .component-card:nth-child(2) .component-icon { background: var(--gradient2); }
+        .component-card:nth-child(3) .component-icon { background: var(--gradient3); }
+        .component-card:nth-child(4) .component-icon { background: var(--gradient4); }
+
+        .component-card h4 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+        .component-card p { font-size: 14px; color: var(--light2); line-height: 1.6; }
+
+        /* ============ SLIDE 5: EXAMPLES OVERVIEW ============ */
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .example-card {
+            background: var(--dark2);
+            border: 1px solid var(--dark3);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .example-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+        }
+
+        .example-card .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 800;
+        }
+
+        .example-card:nth-child(1) .logo { background: linear-gradient(135deg, #6B7C49, #A8D67F); }
+        .example-card:nth-child(2) .logo { background: linear-gradient(135deg, #10A37F, #00563A); }
+        .example-card:nth-child(3) .logo { background: linear-gradient(135deg, #2563EB, #60A5FA); }
+        .example-card:nth-child(4) .logo { background: linear-gradient(135deg, #F59E0B, #EF4444); }
+
+        .example-card h4 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .example-card p { font-size: 13px; color: var(--light2); line-height: 1.5; }
+        .example-card .company { font-size: 12px; color: var(--dark3); margin-top: 10px; }
+
+        /* ============ SLIDE 6-7: DEEP DIVES ============ */
+        .deepdive-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .deepdive-text h3 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .deepdive-text p {
+            font-size: 18px;
+            color: var(--light2);
+            line-height: 1.8;
+            margin-bottom: 25px;
+        }
+
+        .deepdive-features {
+            list-style: none;
+        }
+
+        .deepdive-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 16px;
+            color: var(--light2);
+        }
+
+        .deepdive-features li::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .deepdive-visual {
+            background: var(--dark2);
+            border: 1px solid var(--dark3);
+            border-radius: 16px;
+            padding: 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--light2);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .deepdive-visual::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient2);
+        }
+
+        .deepdive-visual .prompt { color: var(--success); }
+        .deepdive-visual .cmd { color: var(--accent); }
+        .deepdive-visual .comment { color: var(--dark3); }
+
+        /* ============ SLIDE 8: WHY IT MATTERS ============ */
+        .why-container {
+            display: flex;
+            gap: 60px;
+            align-items: center;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .why-chart {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .chart-label {
+            width: 150px;
+            text-align: right;
+            font-size: 14px;
+            color: var(--light2);
+        }
+
+        .chart-track {
+            flex: 1;
+            height: 40px;
+            background: var(--dark2);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-fill {
+            height: 100%;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: width 1.5s ease;
+        }
+
+        .chart-fill.model { background: var(--gradient1); width: 75%; }
+        .chart-fill.harness { background: var(--gradient2); width: 90%; }
+        .chart-fill.combined { background: var(--gradient4); width: 98%; }
+
+        .why-text {
+            flex: 1;
+        }
+
+        .why-text h3 {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+
+        .why-text p {
+            font-size: 16px;
+            color: var(--light2);
+            line-height: 1.8;
+        }
+
+        .why-text .quote {
+            background: var(--dark2);
+            border-left: 4px solid var(--accent);
+            padding: 20px 25px;
+            border-radius: 0 12px 12px 0;
+            margin-top: 25px;
+            font-style: italic;
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        /* ============ SLIDE 9: USE CASES ============ */
+        .usecases-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .usecase-card {
+            background: var(--dark2);
+            border: 1px solid var(--dark3);
+            border-radius: 16px;
+            padding: 35px;
+            transition: all 0.3s;
+        }
+
+        .usecase-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(99,102,241,0.15);
+        }
+
+        .usecase-card .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .usecase-card:nth-child(1) .icon { background: var(--gradient1); }
+        .usecase-card:nth-child(2) .icon { background: var(--gradient2); }
+        .usecase-card:nth-child(3) .icon { background: var(--gradient3); }
+        .usecase-card:nth-child(4) .icon { background: var(--gradient4); }
+        .usecase-card:nth-child(5) .icon { background: var(--gradient1); }
+        .usecase-card:nth-child(6) .icon { background: var(--gradient2); }
+
+        .usecase-card h4 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+        .usecase-card p { font-size: 14px; color: var(--light2); line-height: 1.6; }
+
+        /* ============ SLIDE 10: CONCLUSION ============ */
+        #slide-10 .bg-overlay {
+            background: url('https://images.ctfassets.net/lzny33ho1g45/1v6L0TqwBK5kXnjVt7tqLa/3d0a958c05a11061e6cd723700eb9aab/AI-automation-components.jpg') center/cover;
+        }
+
+        #slide-10 .bg-overlay::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(99,102,241,0.8) 100%);
+        }
+
+        .conclusion-text {
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        .conclusion-text h2 {
+            font-size: 56px;
+            font-weight: 900;
+            margin-bottom: 25px;
+        }
+
+        .conclusion-text p {
+            font-size: 22px;
+            color: var(--light2);
+            margin-bottom: 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .conclusion-links {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .conclusion-link {
+            background: rgba(99,102,241,0.2);
+            border: 1px solid rgba(99,102,241,0.4);
+            padding: 12px 25px;
+            border-radius: 10px;
+            color: var(--light);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .conclusion-link:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* ============ ANIMATIONS ============ */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        /* ============ PROGRESS BAR ============ */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--gradient2);
+            z-index: 100;
+            transition: width 0.3s ease;
+        }
+
+        /* ============ KEYBOARD HINT ============ */
+        .keyboard-hint {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
+            font-size: 12px;
+            color: var(--dark3);
+            z-index: 50;
+        }
+
+        .keyboard-hint kbd {
+            background: var(--dark3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .examples-grid { grid-template-columns: repeat(2, 1fr); }
+            .anatomy-container { flex-direction: column; }
+            .deepdive-container { grid-template-columns: 1fr; }
+            .why-container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progress"></div>
+
+    <!-- SLIDE 1: COVER -->
+    <div class="slide active" id="slide-1">
+        <div class="bg-overlay"></div>
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="bg-glow bg-glow-2"></div>
+        <div class="slide-content">
+            <div class="cover-badge">AI Engineering 2026</div>
+            <h1 class="cover-title">
+                <span class="highlight">Agent Harness</span><br>คืออะไร?
+            </h1>
+            <p class="cover-subtitle">ทำไม AI ที่ฉลาดที่สุด ไม่ได้ขึ้นอยู่กับ Model เพียงอย่างเดียว</p>
+            <p class="cover-meta">อ้างอิงวิดีโอจาก PannKs - "Agent Harness คืออะไร? (ไม่รู้ไม่ได้ล้าวว!)"</p>
+        </div>
+        <span class="page-num">1 / 10</span>
+    </div>
+
+    <!-- SLIDE 2: RAW LLM != AGENT -->
+    <div class="slide" id="slide-2">
+        <div class="bg-overlay bg-gradient"></div>
+        <div class="bg-pattern"></div>
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="slide-content">
+            <span class="section-label">Concept</span>
+            <h2 class="section-title">Raw LLM <span style="color: var(--danger);">≠</span> Agent</h2>
+            <img src="https://substackcdn.com/image/fetch/$s_!FSSm!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F1b2a255e-8439-4212-acea-ff62939cc62a_680x379.png" alt="LLM without harness" class="slide-image" style="max-width: 800px; margin-bottom: 30px;">
+            <div class="comparison-grid" style="position: relative;">
+                <div class="comparison-card before card-before">
+                    <div class="icon">🧠</div>
+                    <h3>Raw LLM</h3>
+                    <p>โมเดลภาษาขนาดใหญ่ที่ "ตอบคำถาม" ได้ แต่ไม่สามารถทำอะไรเองได้<br>
+                    ไม่มี memory, ไม่ใช้ tool, ไม่ทำงานอัตโนมัติ</p>
+                    <span class="tag">Passive</span>
+                </div>
+                <div class="comparison-card after card-after">
+                    <div class="icon">🤖</div>
+                    <h3>Agent + Harness</h3>
+                    <p>LLM ที่ถูกห่อหุ้มด้วย infrastructure ที่ทำให้สามารถ<br>
+                    จดจำ context, ใช้ tool, ทำงาน autonomously ได้</p>
+                    <span class="tag">Autonomous</span>
+                </div>
+                <div class="arrow-icon">&#10140;</div>
+            </div>
+        </div>
+        <span class="page-num">2 / 10</span>
+    </div>
+
+    <!-- SLIDE 3: ANATOMY -->
+    <div class="slide" id="slide-3">
+        <div class="bg-overlay bg-gradient"></div>
+        <div class="bg-pattern"></div>
+        <div class="slide-content">
+            <span class="section-label">Architecture</span>
+            <h2 class="section-title">Anatomy ของ Agent Harness</h2>
+            <img src="https://substackcdn.com/image/fetch/$s_!4lZU!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F66f594bf-323c-4bc6-aa89-9820f7bc8164_1408x768.png" alt="Agent Harness Architecture" class="slide-image" style="max-width: 700px; margin-bottom: 30px;">
+            <div class="anatomy-container">
+                <div class="anatomy-visual">
+                    <div class="anatomy-circle outer"></div>
+                    <div class="anatomy-circle middle"></div>
+                    <div class="anatomy-circle core">LLM Core</div>
+                </div>
+                <div class="anatomy-list">
+                    <div class="anatomy-item">
+                        <div class="num">1</div>
+                        <div>
+                            <h4>LLM / Model</h4>
+                            <p>แกนกลาง - ส่วนที่ "คิด" และ "ให้เหตุผล"</p>
+                        </div>
+                    </div>
+                    <div class="anatomy-item">
+                        <div class="num">2</div>
+                        <div>
+                            <h4>Memory System</h4>
+                            <p>จดจำ context, conversation history, ไฟล์ในโปรเจกต์</p>
+                        </div>
+                    </div>
+                    <div class="anatomy-item">
+                        <div class="num">3</div>
+                        <div>
+                            <h4>Tool Integration</h4>
+                            <p>เข้าถึง filesystem, terminal, browser, API ภายนอก</p>
+                        </div>
+                    </div>
+                    <div class="anatomy-item">
+                        <div class="num">4</div>
+                        <div>
+                            <h4>Autonomous Loop</h4>
+                            <p>ทำงานซ้ำๆ ได้เอง แก้ไขข้อผิดพลาด ดำเนินการต่อ</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <span class="page-num">3 / 10</span>
+    </div>
+
+    <!-- SLIDE 4: COMPONENTS -->
+    <div class="slide" id="slide-4">
+        <div class="bg-overlay bg-gradient"></div>
+        <div class="bg-pattern"></div>
+        <div class="slide-content">
+            <span class="section-label">Deep Dive</span>
+            <h2 class="section-title">4 องค์ประกอบหลัก</h2>
+            <img src="https://substackcdn.com/image/fetch/$s_!vQq0!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fff781ef3-17a1-4caf-b011-32ce9971209b_1400x788.png" alt="Harness Components" class="slide-image" style="max-width: 800px; margin-bottom: 30px;">
+            <div class="components-grid">
+                <div class="component-card">
+                    <div class="component-icon">💾</div>
+                    <div>
+                        <h4>Memory & Context</h4>
+                        <p>Context window management, conversation history, file indexing, CLAUDE.md, git awareness</p>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-icon">🔧</div>
+                    <div>
+                        <h4>Tool Use</h4>
+                        <p>File read/write, Bash execution, web search, browser automation, MCP servers</p>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-icon">🔄</div>
+                    <div>
+                        <h4>Error Handling</h4>
+                        <p>Retry logic, test validation, hook execution, graceful degradation, self-correction</p>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-icon">🚀</div>
+                    <div>
+                        <h4>Autonomy</h4>
+                        <p>Multi-step planning, task decomposition, background agents, long-running sessions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <span class="page-num">4 / 10</span>
+    </div>
+
+    <!-- SLIDE 5: REAL-WORLD EXAMPLES -->
+    <div class="slide" id="slide-5">
+        <div class="bg-overlay bg-gradient"></div>
+        <div class="bg-pattern"></div>
+        <div class="slide-content">
+            <span class="section-label">Examples</span>
+            <h2 class="section-title">AI Agent Harness ในชีวิตจริง</h2>
+            <div class="examples-grid">
+                <div class="example-card">
+                    <img src="https://static0.xdaimages.com/wordpress/wp-content/uploads/wm/2026/04/claude-ai-coding-assistant-displayed-in-terminal-window-on-mac-laptop.jpg?q=49&fit=crop&w=825&dpr=2" alt="Claude Code">
+                    <h4>Claude Code</h4>
+                    <p>Terminal-based AI coding assistant จาก Anthropic</p>
+                    <span class="company">Anthropic</span>
+                </div>
+                <div class="example-card">
+                    <img src="https://miro.medium.com/v2/resize:fit:1400/0*fLoTCys8__LmRWnu.png" alt="OpenAI Codex">
+                    <h4>OpenAI Codex</h4>
+                    <p>Terminal coding agent เขียนใน Rust 75K+ GitHub stars</p>
+                    <span class="company">OpenAI</span>
+                </div>
+                <div class="example-card">
+                    <img src="https://code.visualstudio.com/assets/blogs/2025/02/24/agent-mode.png" alt="GitHub Copilot">
+                    <h4>GitHub Copilot</h4>
+                    <p>Agent mode ใน VS Code + Cloud agent sessions</p>
+                    <span class="company">Microsoft / GitHub</span>
+                </div>
+                <div class="example-card">
+                    <img src="https://media.geeksforgeeks.org/wp-content/uploads/20250326183013111666/Cursor-AI-Interface--Explained-in-Detail.webp" alt="Cursor IDE">
+                    <h4>Cursor</h4>
+                    <p>AI-first IDE ที่ผสาน agent เข้ากับ workflow</p>
+                    <span class="company">Cursor AI</span>
+                </div>
+            </div>
+        </div>
+        <span class="page-num">5 / 10</span>
+    </div>
+
+    <!-- SLIDE 6: CLAUDE CODE DEEP DIVE -->
+    <div class="slide" id="slide-6">
+        <div class="bg-overlay bg-gradient"></div>
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="slide-content">
+            <div class="deepdive-container">
+                <div class="deepdive-text">
+                    <span class="section-label">Case Study 1</span>
+                    <h3>Claude Code</h3>
+                    <img src="https://media2.dev.to/dynamic/image/width=1280,height=720,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.amazonaws.com%2Fuploads%2Farticles%2Ffzdhqq2elggqyynbwq4r.png" alt="Claude Code Interface" class="slide-image" style="max-width: 100%; margin: 15px 0 25px;">
+                    <p>Claude Code คือ AI coding agent จาก Anthropic ที่ทำงานผ่าน terminal มี harness ที่ครอบคลุม:</p>
+                    <ul class="deepdive-features">
+                        <li>CLAUDE.md - persistent memory & instructions</li>
+                        <li>Tool use - file, bash, web, image</li>
+                        <li>Hooks - automated pre/post actions</li>
+                        <li>MCP servers - external tool integration</li>
+                        <li>Sub-agents - parallel exploration</li>
+                        <li>Plan mode - architectural design before coding</li>
+                    </ul>
+                </div>
+                <div class="deepdive-visual">
+                    <div class="comment"># Claude Code Terminal Session</div><br>
+                    <span class="prompt">&gt;</span> <span class="cmd">สร้าง test1.txt มีเนื้อหา abcdef</span><br><br>
+                    <span class="comment"># Claude อ่าน → เขียนไฟล์</span><br>
+                    <span class="prompt">&gt;</span> Writing test1.txt...<br>
+                    <span class="prompt">&gt;</span> <span style="color: var(--success);">File created successfully</span><br><br>
+                    <span class="comment"># Hooks auto-run</span><br>
+                    <span class="prompt">&gt;</span> Running pre-commit hook...<br>
+                    <span class="prompt">&gt;</span> <span style="color: var(--success);">All checks passed</span><br><br>
+                    <span class="comment"># Sub-agent explores codebase</span><br>
+                    <span class="prompt">&gt;</span> Launching Explore agent...<br>
+                    <span class="prompt">&gt;</span> <span style="color: var(--accent);">Found 3 matching files</span>
+                </div>
+            </div>
+        </div>
+        <span class="page-num">6 / 10</span>
+    </div>
+
+    <!-- SLIDE 7: CODEX DEEP DIVE -->
+    <div class="slide" id="slide-7">
+        <div class="bg-overlay bg-gradient"></div>
+        <div class="bg-glow bg-glow-2"></div>
+        <div class="slide-content">
+            <div class="deepdive-container">
+                <div class="deepdive-visual" style="order: 2;">
+                    <img src="https://images.ctfassets.net/kftzwdyauwt9/2yhhXNiYjyEYmc9q5bMHkt/b503f2919724d3be8e6863d9a3ec1403/Codex_Citations_02.png?w=3840&q=90&fm=webp" alt="OpenAI Codex Interface" style="width: 100%; border-radius: 8px; margin-bottom: 15px;">
+                    <div class="comment"># OpenAI Codex Terminal Session</div><br>
+                    <span class="prompt">$</span> <span class="cmd">codex</span><br><br>
+                    <span class="comment"># Sandbox mode for safety</span><br>
+                    <span class="prompt">&gt;</span> Running in <span style="color: var(--accent);">sandbox</span> mode<br><br>
+                    <span class="comment"># Browser use for verification</span><br>
+                    <span class="prompt">&gt;</span> Opening browser to verify...<br>
+                    <span class="prompt">&gt;</span> <span style="color: var(--success);">Page loaded successfully</span><br><br>
+                    <span class="comment"># Goals for multi-step tasks</span><br>
+                    <span class="prompt">&gt;</span> Goal: <span style="color: var(--accent2);">Add auth endpoint</span><br>
+                    <span class="prompt">&gt;</span> Step 1/4: Create route handler<br>
+                    <span class="prompt">&gt;</span> Step 2/4: Write tests
+                </div>
+                <div class="deepdive-text" style="order: 1;">
+                    <span class="section-label">Case Study 2</span>
+                    <h3>OpenAI Codex</h3>
+                    <p>Codex คือ terminal-based coding agent จาก OpenAI เขียนด้วย Rust มี harness ที่แตกต่าง:</p>
+                    <ul class="deepdive-features">
+                        <li>Sandbox execution - safe code execution</li>
+                        <li>Browser use - web verification</li>
+                        <li>Goals - multi-step task planning</li>
+                        <li>Desktop automation - ควบคุม Mac ได้ (เมษายน 2026)</li>
+                        <li>GPT-5.5 integration</li>
+                        <li>Open source - 75K+ GitHub stars</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <span class="page-num">7 / 10</span>
+    </div>
+
+    <!-- SLIDE 8: WHY IT MATTERS -->
+    <div class="slide" id="slide-8">
+        <div class="bg-overlay bg-gradient"></div>
+        <div class="bg-pattern"></div>
+        <div class="slide-content">
+            <div class="why-container">
+                <div class="why-chart">
+                    <img src="https://pixeltable.com/images/building-stateful-agent.webp" alt="AI Agent State Management" class="why-image">
+                    <div class="chart-bar">
+                        <span class="chart-label">Model อย่างเดียว</span>
+                        <div class="chart-track">
+                            <div class="chart-fill model">75%</div>
+                        </div>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">Harness อย่างเดียว</span>
+                        <div class="chart-track">
+                            <div class="chart-fill harness">90%</div>
+                        </div>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">Model + Harness</span>
+                        <div class="chart-track">
+                            <div class="chart-fill combined">98%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="why-text">
+                    <h3>Model Intelligence<br><span style="color: var(--accent);">vs</span><br>Harness Capability</h3>
+                    <p>ในปี 2026 ปัจจัยที่กำหนดความสามารถของ AI ไม่ใช่ความฉลาดของ model อย่างเดียว แต่เป็น <strong style="color: var(--accent);">infrastructure ที่ล้อมรอบ</strong> model นั้น</p>
+                    <div class="quote">
+                        "The defining factor in AI systems is no longer just the intelligence of the model itself, but the harness built around it."
+                    </div>
+                </div>
+            </div>
+        </div>
+        <span class="page-num">8 / 10</span>
+    </div>
+
+    <!-- SLIDE 9: USE CASES -->
+    <div class="slide" id="slide-9">
+        <div class="bg-overlay bg-gradient"></div>
+        <div class="bg-pattern"></div>
+        <div class="slide-content">
+            <span class="section-label">Applications</span>
+            <h2 class="section-title">Use Cases ที่ทำได้จริง</h2>
+            <img src="https://d3lkc3n5th01x7.cloudfront.net/wp-content/uploads/2024/05/08234415/AI-for-workflow-automation.png" alt="AI Workflow Automation" class="slide-image" style="max-width: 700px; margin-bottom: 30px;">
+            <div class="usecases-grid">
+                <div class="usecase-card">
+                    <div class="icon">📊</div>
+                    <h4>สรุป Bug Reports</h4>
+                    <p>อ่าน bug reports จำนวนมาก สรุป pattern และ trend อัตโนมัติ</p>
+                </div>
+                <div class="usecase-card">
+                    <div class="icon">📝</div>
+                    <h4>สร้าง Deploy Notes</h4>
+                    <p>อ่าน git log, สร้าง release notes และ changelog อัตโนมัติ</p>
+                </div>
+                <div class="usecase-card">
+                    <div class="icon">🔍</div>
+                    <h4>Incident Review</h4>
+                    <p>วิเคราะห์ incident logs สรุป root cause และข้อเสนอแนะ</p>
+                </div>
+                <div class="usecase-card">
+                    <div class="icon">🧪</div>
+                    <h4>เขียน Tests</h4>
+                    <p>อ่านโค้ด เขียน unit/integration tests ครอบคลุม</p>
+                </div>
+                <div class="usecase-card">
+                    <div class="icon">🔄</div>
+                    <h4>Refactor Code</h4>
+                    <p>ปรับปรุง code structure, ลบ dead code, เพิ่ม efficiency</p>
+                </div>
+                <div class="usecase-card">
+                    <div class="icon">🌐</div>
+                    <h4>Web Scraping</h4>
+                    <p>ค้นหาข้อมูลจากเว็บ สรุปเนื้อหา ดึงข้อมูลอัตโนมัติ</p>
+                </div>
+            </div>
+        </div>
+        <span class="page-num">9 / 10</span>
+    </div>
+
+    <!-- SLIDE 10: CONCLUSION -->
+    <div class="slide" id="slide-10">
+        <div class="bg-overlay"></div>
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="bg-glow bg-glow-2"></div>
+        <div class="slide-content">
+            <div class="conclusion-text">
+                <h2>สรุป & Q&A</h2>
+                <p>Agent Harness คือ <strong>infrastructure</strong> ที่ทำให้ AI กลายเป็น Agent ที่ทำงานได้จริง<br>
+                ไม่ใช่แค่ model ที่ "ฉลาด" แต่คือระบบที่ "ทำได้"</p>
+                <div class="conclusion-links">
+                    <a class="conclusion-link" href="https://www.youtube.com/watch?v=yD79OAd4O1k" target="_blank">วิดีโอต้นทาง (PannKs)</a>
+                    <a class="conclusion-link" href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" target="_blank">Anthropic Engineering Blog</a>
+                    <a class="conclusion-link" href="https://www.langchain.com/blog/the-anatomy-of-an-agent-harness" target="_blank">LangChain Blog</a>
+                </div>
+            </div>
+        </div>
+        <span class="page-num">10 / 10</span>
+    </div>
+
+    <!-- Navigation -->
+    <button class="nav-btn nav-prev" onclick="changeSlide(-1)">&#10094;</button>
+    <button class="nav-btn nav-next" onclick="changeSlide(1)">&#10095;</button>
+
+    <!-- Indicators -->
+    <div class="slide-indicators" id="indicators"></div>
+
+    <!-- Keyboard hint -->
+    <div class="keyboard-hint">ใช้ <kbd>←</kbd> <kbd>→</kbd> หรือคลิกเพื่อเปลี่ยนสไลด์</div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 10;
+
+        // Create indicators
+        const indicatorsContainer = document.getElementById('indicators');
+        for (let i = 1; i <= totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'indicator' + (i === 1 ? ' active' : '');
+            dot.onclick = () => goToSlide(i);
+            indicatorsContainer.appendChild(dot);
+        }
+
+        function updateSlide() {
+            // Update slides
+            document.querySelectorAll('.slide').forEach((slide, index) => {
+                slide.classList.toggle('active', index + 1 === currentSlide);
+            });
+
+            // Update indicators
+            document.querySelectorAll('.indicator').forEach((dot, index) => {
+                dot.classList.toggle('active', index + 1 === currentSlide);
+            });
+
+            // Update progress bar
+            document.getElementById('progress').style.width = `${(currentSlide / totalSlides) * 100}%`;
+        }
+
+        function changeSlide(direction) {
+            currentSlide = Math.max(1, Math.min(totalSlides, currentSlide + direction));
+            updateSlide();
+        }
+
+        function goToSlide(n) {
+            currentSlide = n;
+            updateSlide();
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft') {
+                changeSlide(-1);
+            } else if (e.key === 'Home') {
+                goToSlide(1);
+            } else if (e.key === 'End') {
+                goToSlide(totalSlides);
+            }
+        });
+
+        // Touch/swipe support
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) {
+                changeSlide(diff > 0 ? 1 : -1);
+            }
+        });
+
+        // Initialize
+        updateSlide();
+    </script>
+</body>
+</html>
